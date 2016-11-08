@@ -4,8 +4,11 @@
 #include <sstream>
 #include "TLD.h"
 #include <stdio.h>
+
 using namespace cv;
 using namespace std;
+
+
 //Global variables
 Rect box;
 bool drawing_box = false;
@@ -15,6 +18,8 @@ bool rep = false;
 bool fromfile=false;
 string video;
 
+
+//从文件读取边框的四个参数
 void readBB(char* file){
   ifstream bb_file (file);
   string line;
@@ -31,7 +36,10 @@ void readBB(char* file){
   int h = atoi(y2.c_str())-y;// = (int)file["bb_h"];
   box = Rect(x,y,w,h);
 }
+
+
 //bounding box mouse callback
+//鼠标响应获取边框
 void mouseHandler(int event, int x, int y, int flags, void *param){
   switch( event ){
   case CV_EVENT_MOUSEMOVE:
@@ -59,11 +67,15 @@ void mouseHandler(int event, int x, int y, int flags, void *param){
   }
 }
 
+
+
 void print_help(char** argv){
   printf("use:\n     %s -p /path/parameters.yml\n",argv[0]);
   printf("-s    source video\n-b        bounding box file\n-tl  track and learn\n-r     repeat\n");
 }
 
+
+//从命令行读取程序入口参数
 void read_options(int argc, char** argv,VideoCapture& capture,FileStorage &fs){
   for (int i=0;i<argc;i++){
       if (strcmp(argv[i],"-b")==0){
@@ -100,31 +112,39 @@ void read_options(int argc, char** argv,VideoCapture& capture,FileStorage &fs){
   }
 }
 
+
+//主程序
 int main(int argc, char * argv[]){
   VideoCapture capture;
   capture.open(0);
+
+  //FileStorage类用于保存图像
   FileStorage fs;
+
   //Read options
   read_options(argc,argv,capture,fs);
+
   //Init camera
   if (!capture.isOpened())
   {
 	cout << "capture device failed to open!" << endl;
     return 1;
   }
+
   //Register mouse callback to draw the bounding box
   cvNamedWindow("TLD",CV_WINDOW_AUTOSIZE);
-  cvSetMouseCallback( "TLD", mouseHandler, NULL );
+  cvSetMouseCallback( "TLD", mouseHandler, NULL );	//注意：mouseHandler是一个函数
+
   //TLD framework
-  TLD tld;
+  TLD tld;	//初始化tld对象
   //Read parameters file
   tld.read(fs.getFirstTopLevelNode());
   Mat frame;
   Mat last_gray;
   Mat first;
   if (fromfile){
-      capture >> frame;
-      cvtColor(frame, last_gray, CV_RGB2GRAY);
+      capture >> frame;	  //当前帧图像赋值给frame变量
+      cvtColor(frame, last_gray, CV_RGB2GRAY);  //将frame图像转换为last_gray灰度图像
       frame.copyTo(first);
   }else{
       capture.set(CV_CAP_PROP_FRAME_WIDTH,340);
